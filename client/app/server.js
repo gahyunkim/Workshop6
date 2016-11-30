@@ -1,9 +1,9 @@
 import {readDocument, writeDocument, addDocument, deleteDocument, getCollection} from './database.js';
 
 /**
- * Emulates how a REST call is *asynchronous* -- it calls your function back
- * some time in the future with data.
- */
+* Emulates how a REST call is *asynchronous* -- it calls your function back
+* some time in the future with data.
+*/
 function emulateServerReturn(data, cb) {
   setTimeout(() => {
     cb(data);
@@ -11,8 +11,8 @@ function emulateServerReturn(data, cb) {
 }
 
 /**
- * Resolves a feed item. Internal to the server, since it's synchronous.
- */
+* Resolves a feed item. Internal to the server, since it's synchronous.
+*/
 function getFeedItemSync(feedItemId) {
   var feedItem = readDocument('feedItems', feedItemId);
   // Resolve 'like' counter.
@@ -28,21 +28,21 @@ function getFeedItemSync(feedItemId) {
 }
 
 /**
- * Emulates a REST call to get the feed data for a particular user.
- */
+* Emulates a REST call to get the feed data for a particular user.
+*/
 export function getFeedData(user, cb) {
-  var userData = readDocument('users', user);
-  var feedData = readDocument('feeds', userData.feed);
-  // While map takes a callback, it is synchronous, not asynchronous.
-  // It calls the callback immediately.
-  feedData.contents = feedData.contents.map(getFeedItemSync);
-  // Return FeedData with resolved references.
-  emulateServerReturn(feedData, cb);
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/user/4/feed');
+  xhr.setRequestHeader('Authorization', 'Bearer eyJpZCI6NH0=');
+  xhr.addEventListener('load', function() {
+    cb(JSON.parse(xhr.responseText));
+  });
+  xhr.send();
 }
 
 /**
- * Adds a new status update to the database.
- */
+* Adds a new status update to the database.
+*/
 export function postStatusUpdate(user, location, contents, cb) {
   // If we were implementing this for real on an actual server, we would check
   // that the user ID is correct & matches the authenticated user. But since
@@ -82,8 +82,8 @@ export function postStatusUpdate(user, location, contents, cb) {
 }
 
 /**
- * Adds a new comment to the database on the given feed item.
- */
+* Adds a new comment to the database on the given feed item.
+*/
 export function postComment(feedItemId, author, contents, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   feedItem.comments.push({
@@ -98,9 +98,9 @@ export function postComment(feedItemId, author, contents, cb) {
 }
 
 /**
- * Updates a feed item's likeCounter by adding the user to the likeCounter.
- * Provides an updated likeCounter in the response.
- */
+* Updates a feed item's likeCounter by adding the user to the likeCounter.
+* Provides an updated likeCounter in the response.
+*/
 export function likeFeedItem(feedItemId, userId, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   // Normally, we would check if the user already liked this comment.
@@ -113,9 +113,9 @@ export function likeFeedItem(feedItemId, userId, cb) {
 }
 
 /**
- * Updates a feed item's likeCounter by removing the user from the likeCounter.
- * Provides an updated likeCounter in the response.
- */
+* Updates a feed item's likeCounter by removing the user from the likeCounter.
+* Provides an updated likeCounter in the response.
+*/
 export function unlikeFeedItem(feedItemId, userId, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   // Find the array index that contains the user's ID.
@@ -133,8 +133,8 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
 }
 
 /**
- * Adds a 'like' to a comment.
- */
+* Adds a 'like' to a comment.
+*/
 export function likeComment(feedItemId, commentIdx, userId, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   var comment = feedItem.comments[commentIdx];
@@ -145,8 +145,8 @@ export function likeComment(feedItemId, commentIdx, userId, cb) {
 }
 
 /**
- * Removes a 'like' from a comment.
- */
+* Removes a 'like' from a comment.
+*/
 export function unlikeComment(feedItemId, commentIdx, userId, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   var comment = feedItem.comments[commentIdx];
@@ -160,8 +160,8 @@ export function unlikeComment(feedItemId, commentIdx, userId, cb) {
 }
 
 /**
- * Updates the text in a feed item (assumes a status update)
- */
+* Updates the text in a feed item (assumes a status update)
+*/
 export function updateFeedItemText(feedItemId, newContent, cb) {
   var feedItem = readDocument('feedItems', feedItemId);
   // Update text content of update.
@@ -171,8 +171,8 @@ export function updateFeedItemText(feedItemId, newContent, cb) {
 }
 
 /**
- * Deletes a feed item.
- */
+* Deletes a feed item.
+*/
 export function deleteFeedItem(feedItemId, cb) {
   // Assumption: The current user authored this feed item.
   deleteDocument('feedItems', feedItemId);
@@ -197,8 +197,8 @@ export function deleteFeedItem(feedItemId, cb) {
 }
 
 /**
- * Searches for feed items with the given text.
- */
+* Searches for feed items with the given text.
+*/
 export function searchForFeedItems(userId, queryText, cb) {
   // trim() removes whitespace before and after the query.
   // toLowerCase() makes the query lowercase.
